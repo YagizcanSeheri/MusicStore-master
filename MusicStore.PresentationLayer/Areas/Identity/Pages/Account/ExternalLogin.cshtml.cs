@@ -13,6 +13,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.Extensions.Logging;
+using MusicStore.ApplicationLayer;
+using MusicStore.DomainLayer.Entities;
 
 namespace MusicStore.PresentationLayer.Areas.Identity.Pages.Account
 {
@@ -51,6 +53,12 @@ namespace MusicStore.PresentationLayer.Areas.Identity.Pages.Account
             [Required]
             [EmailAddress]
             public string Email { get; set; }
+            public string Name { get; set; }
+            public string Address { get; set; }
+            public string City { get; set; }
+            public string Country { get; set; }
+            public string PostCode { get; set; }
+            public string PhoneNumber { get; set; }
         }
 
         public IActionResult OnGetAsync()
@@ -101,7 +109,8 @@ namespace MusicStore.PresentationLayer.Areas.Identity.Pages.Account
                 {
                     Input = new InputModel
                     {
-                        Email = info.Principal.FindFirstValue(ClaimTypes.Email)
+                        Email = info.Principal.FindFirstValue(ClaimTypes.Email),
+                        Name = info.Principal.FindFirstValue(ClaimTypes.Name)
                     };
                 }
                 return Page();
@@ -121,11 +130,24 @@ namespace MusicStore.PresentationLayer.Areas.Identity.Pages.Account
 
             if (ModelState.IsValid)
             {
-                var user = new IdentityUser { UserName = Input.Email, Email = Input.Email };
+                //var user = new IdentityUser { UserName = Input.Email, Email = Input.Email };
+                var user = new AppUser()
+                {
+                    UserName = Input.Email,
+                    Email = Input.Email,
+                    Address = Input.Address,
+                    City = Input.City,
+                    Country = Input.Country,
+                    PostCode = Input.PostCode,
+                    Name = Input.Name,
+                    PhoneNumber = Input.PhoneNumber,
+                  
+                };
 
                 var result = await _userManager.CreateAsync(user);
                 if (result.Succeeded)
                 {
+                    await _userManager.AddToRoleAsync(user, ProjectConstant.Role_User_Ind);
                     result = await _userManager.AddLoginAsync(user, info);
                     if (result.Succeeded)
                     {

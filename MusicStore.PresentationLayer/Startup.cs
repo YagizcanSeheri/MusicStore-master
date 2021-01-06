@@ -40,6 +40,9 @@ namespace MusicStore.PresentationLayer
 
             services.AddScoped<IUnitOfWork, UnitOfWork>();
             services.AddSingleton<IEmailSender, EmailSender>();
+            services.Configure<EmailOptions>(Configuration);
+
+            
             services.AddControllersWithViews().AddRazorRuntimeCompilation();
             services.AddRazorPages();
             services.AddMvc();
@@ -49,6 +52,18 @@ namespace MusicStore.PresentationLayer
                 opt.LoginPath = $"/Identity/Account/Login";
                 opt.LogoutPath = $"/Identity/Account/Logout";
                 opt.AccessDeniedPath = $"/Identity/Account/AccessDenied";
+            });
+
+            services.AddAuthentication().AddFacebook(opt=> 
+            {
+                opt.AppId = "1336513253382110";
+                opt.AppSecret = "938815b4766735c51ed679ddd36dd531";
+            });
+
+            services.AddAuthentication().AddGoogle(opt =>
+            {
+                opt.ClientId = "369465297845-b3h7tq49v9hbmnjnih3eroq2lfp4ea1i.apps.googleusercontent.com";
+                opt.ClientSecret = "4ov0r9Hq_1t-bQTbRs73m4Qb";
             });
             
         }
