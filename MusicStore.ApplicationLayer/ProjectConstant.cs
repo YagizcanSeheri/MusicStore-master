@@ -26,5 +26,8 @@ namespace MusicStore.ApplicationLayer
         public const string Role_Admin = "Admin";
         public const string Role_Emp = "Employee";
 
+
+        public const string shoppingCart = "ShoppingCart";
+
     }
 }

@@ -16,6 +16,8 @@ using MusicStore.DomainLayer.UnitOfWork.Abstraction;
 using MusicStore.InfrastructureLayer.UnitOfWork.Concrete;
 using Microsoft.AspNetCore.Identity.UI.Services;
 using MusicStore.ApplicationLayer.Senders;
+using MusicStore.ApplicationLayer.Payment;
+using Stripe;
 
 namespace MusicStore.PresentationLayer
 {
@@ -41,6 +43,7 @@ namespace MusicStore.PresentationLayer
             services.AddScoped<IUnitOfWork, UnitOfWork>();
             services.AddSingleton<IEmailSender, EmailSender>();
             services.Configure<EmailOptions>(Configuration);
+            services.Configure<StripeSettings>(Configuration.GetSection("Stripe"));
 
             
             services.AddControllersWithViews().AddRazorRuntimeCompilation();
@@ -65,6 +68,15 @@ namespace MusicStore.PresentationLayer
                 opt.ClientId = "369465297845-b3h7tq49v9hbmnjnih3eroq2lfp4ea1i.apps.googleusercontent.com";
                 opt.ClientSecret = "4ov0r9Hq_1t-bQTbRs73m4Qb";
             });
+
+            services.AddSession(opt => 
+            {
+                opt.IdleTimeout = TimeSpan.FromMinutes(30);
+                opt.Cookie.HttpOnly = true;
+                opt.Cookie.IsEssential = true;
+
+            });
+
             
         }
 
@@ -82,10 +94,13 @@ namespace MusicStore.PresentationLayer
                 // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
                 app.UseHsts();
             }
+
+            StripeConfiguration.ApiKey = Configuration.GetSection("Stripe")["SecretKey"];
             app.UseHttpsRedirection();
             app.UseStaticFiles();
 
             app.UseRouting();
+            app.UseSession();
 
             app.UseAuthentication();
             app.UseAuthorization();

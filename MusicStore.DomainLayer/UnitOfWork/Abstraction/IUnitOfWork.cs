@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Threading.Tasks;
 
 namespace MusicStore.DomainLayer.UnitOfWork.Abstraction
 {
@@ -13,6 +14,9 @@ namespace MusicStore.DomainLayer.UnitOfWork.Abstraction
         IProductRepository Product { get; }
         ICompanyRepository Company { get; }
         IAppUserRepository AppUser { get; }
+        IShoppingCartRepository ShoppingCart { get; }
+        IOrderDetailsRepository OrderDetails { get; }
+        IOrderHeaderRepository OrderHeader { get; }
         void Commit();
     }
 }
