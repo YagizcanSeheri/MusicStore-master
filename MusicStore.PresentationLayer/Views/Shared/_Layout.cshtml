@@ -42,8 +42,7 @@
                             <div class="dropdown-divider"></div>
                             <a class="dropdown-item" href="#">Something else here</a>
                         </div>
-                    </li>
-}
+                    </li>}
 
                         @if (User.IsInRole(ProjectConstant.Role_Emp) || User.IsInRole(ProjectConstant.Role_Admin))
                         {
@@ -60,28 +59,28 @@
 
 
 
-                    </li>}
+                    </li>
+}
+                        <li class="nav-item">
+                            <a class="nav-link text-white" asp-area="Admin" asp-controller="Order" asp-action="Index">Orders</a>
+                        </li>
 
                         @if (HttpContextAccessor.HttpContext.Session.GetInt32(ProjectConstant.shoppingCart) != null)
                         {
-                            <li style="color:white">
-                                <a asp-area="Customer" asp-controller="Cart" asp-action="Index" class="nav-link">
-                                    @{
-                                        var count = HttpContextAccessor.HttpContext.Session.GetInt32(ProjectConstant.shoppingCart);
-                                    }
-                                    <i class="fas fa-shopping-cart">(@count)</i>
-                                </a>
-                            </li>
-                        }
-                        else
-                        {
-                            <li style="color:white">
-                                <a href="#" class="nav-link">
-                                   
-                                    <i class="fas fa-shopping-cart">(0)</i>
-                                </a>
-                            </li>
-                        }
+                    <li style="color:white">
+                        <a asp-area="Customer" asp-controller="Cart" asp-action="Index" class="nav-link">
+                            @{ var count = HttpContextAccessor.HttpContext.Session.GetInt32(ProjectConstant.shoppingCart); }
+                            <i class="fas fa-shopping-cart">(@count)</i>
+                        </a>
+                    </li> }
+                                else
+                                {
+                    <li style="color:white">
+                        <a href="#" class="nav-link">
+
+                            <i class="fas fa-shopping-cart">(0)</i>
+                        </a>
+                    </li>}
 
 
 

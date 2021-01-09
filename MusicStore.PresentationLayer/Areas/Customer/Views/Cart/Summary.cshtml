@@ -1,5 +1,9 @@
 ﻿@model MusicStore.ApplicationLayer.ViewModels.CartVM
 
+@using Microsoft.Extensions.Options
+
+@inject IOptions<MusicStore.ApplicationLayer.Payment.StripeSettings> Stripe
+
 @{
     ViewData["Title"] = "Summary";
     Layout = "~/Views/Shared/_Layout.cshtml";
@@ -35,6 +39,7 @@
                                     </div>
                                     <div class="col-9">
                                         <input asp-for="OrderHeader.Name" type="text" class="form-control" />
+                                        <span asp-validation-for="OrderHeader.Name" class="text-danger"></span>
                                     </div>
                                 </div>
                                 <div class="row my-1">
@@ -43,6 +48,7 @@
                                     </div>
                                     <div class="col-9">
                                         <input asp-for="OrderHeader.PhoneNumber" type="text" class="form-control" />
+                                        <span asp-validation-for="OrderHeader.PhoneNumber" class="text-danger"></span>
                                     </div>
                                 </div>
                                 <div class="row my-1">
@@ -51,6 +57,7 @@
                                     </div>
                                     <div class="col-9">
                                         <input asp-for="OrderHeader.Address" type="text" class="form-control" />
+                                        <span asp-validation-for="OrderHeader.Address" class="text-danger"></span>
                                     </div>
                                 </div>
                                 <div class="row my-1">
@@ -59,6 +66,7 @@
                                     </div>
                                     <div class="col-9">
                                         <input asp-for="OrderHeader.City" type="text" class="form-control" />
+                                        <span asp-validation-for="OrderHeader.City" class="text-danger"></span>
                                     </div>
                                 </div>
                                 <div class="row my-1">
@@ -67,6 +75,7 @@
                                     </div>
                                     <div class="col-9">
                                         <input asp-for="OrderHeader.Country" type="text" class="form-control" />
+                                        <span asp-validation-for="OrderHeader.Country" class="text-danger"></span>
                                     </div>
                                 </div>
                                 <div class="row my-1">
@@ -75,6 +84,7 @@
                                     </div>
                                     <div class="col-9">
                                         <input asp-for="OrderHeader.PostCode" type="text" class="form-control" />
+                                        <span asp-validation-for="OrderHeader.PostCode" class="text-danger"></span>
                                     </div>
                                 </div>
                             </div>
@@ -111,8 +121,32 @@
                             <p style="color:maroon; font-size:14px;">Estimate Arrival Date: @DateTime.Now.AddDays(7).ToShortDateString() - @DateTime.Now.AddDays(14).ToShortDateString()</p>
                         </div>
                         <div class="col-12 col-md-4">
+                            @{ var orderTotalForStripe = Model.OrderHeader.OrderTotal * 100;}
 
-                            <button type="submit" value="Place Order" class="btn btn-success form-control">Place Order</button>
+                            @if (Model.OrderHeader.AppUser.Company == null || !Model.OrderHeader.AppUser.Company.IsAuthorizedCompany)
+                            {
+                                <script src="https://checkout.stripe.com/checkout.js" class="stripe-button" data-key="@Stripe.Value.PublishableKey"
+                                        data-amount="@orderTotalForStripe"
+                                        data-name="YGZ Store"
+                                        data-label="Place Order"
+                                        data-description="Let's Do Some Shopping"
+                                        data-locale="auto"
+                                        data-allow-remember-me="false"
+                                        data-image="https://stripe.com/img/documentation/checkout/marketplace.png">
+
+
+                                </script>
+                                <script>
+                                    document.getElementsByClassName("stripe-button-el")[0].style.display = "none";
+                                </script>
+
+                                <button type="submit" value="Place Order" class="btn btn-success form-control">Place Order</button>
+                            }
+                            else
+                            {
+                                <button type="submit" value="Place Order" class="btn btn-primary form-control">Place Order</button>
+                            }
+
                         </div>
                     </div>
                 </div>
@@ -120,4 +154,11 @@
         </div>
     </div>
 </form>
+
+
+@section Scripts{
+<partial name="_ValidationScriptsPartial" />
+
+ }
+
 

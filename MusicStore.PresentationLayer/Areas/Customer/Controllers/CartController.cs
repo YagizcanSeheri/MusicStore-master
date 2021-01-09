@@ -7,7 +7,9 @@ using MusicStore.ApplicationLayer;
 using MusicStore.ApplicationLayer.ViewModels;
 using MusicStore.DomainLayer.Entities;
 using MusicStore.DomainLayer.UnitOfWork.Abstraction;
+using Stripe;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Security.Claims;
 using System.Text;
@@ -137,6 +139,7 @@ namespace MusicStore.PresentationLayer.Areas.Customer.Controllers
         }
 
 
+      
         public IActionResult Summary()
         {
             var claimsIdentity = (ClaimsIdentity)User.Identity;
@@ -166,6 +169,91 @@ namespace MusicStore.PresentationLayer.Areas.Customer.Controllers
             cart.OrderHeader.PostCode = cart.OrderHeader.AppUser.PostCode;
 
             return View(cart);
+        }
+
+
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [ActionName("Summary")]
+        public  IActionResult SummaryPost(CartVM cart,string stripeToken)
+        {
+            var claimsIdentity = (ClaimsIdentity)User.Identity;
+            var claims = claimsIdentity.FindFirst(ClaimTypes.NameIdentifier);
+            
+            cart.OrderHeader.AppUser = _uow.AppUser.GetFirstOrDefault(x => x.Id == claims.Value, includeProperties: "Company");
+
+            cart.CartList = _uow.ShoppingCart.GetAll(x => x.AppUserId == claims.Value, includeProperties:"Product");
+            
+            cart.OrderHeader.PaymentStatus = MusicStore.ApplicationLayer.Payment.PaymentStripeStatus.PaymentStatusPending;
+            cart.OrderHeader.OrderStatus = MusicStore.ApplicationLayer.Payment.PaymentStripeStatus.StatusPending;
+            cart.OrderHeader.AppUserId = claims.Value;
+            cart.OrderHeader.OrderDate = DateTime.Now;
+            _uow.OrderHeader.Add(cart.OrderHeader);
+            _uow.Commit();
+
+            List<OrderDetails> orderDetails = new List<OrderDetails>();
+            foreach (var orderDetail in cart.CartList)
+            {
+                orderDetail.Price = MusicStore.ApplicationLayer.Extensions.CartExtension.GetPriceBaseOnQuantity(orderDetail.Count, orderDetail.Product.Price, orderDetail.Product.Price50, orderDetail.Product.Price100);
+
+                OrderDetails oDetails = new OrderDetails() 
+                {
+                    ProductId = orderDetail.ProductId,
+                    OrderId = cart.OrderHeader.Id,
+                    Price = orderDetail.Price,
+                    Count = orderDetail.Count
+                };
+                cart.OrderHeader.OrderTotal += oDetails.Count * oDetails.Price;
+                _uow.OrderDetails.Add(oDetails);
+            }
+
+            _uow.ShoppingCart.RemoveRange(cart.CartList);
+            
+            HttpContext.Session.SetInt32(ProjectConstant.shoppingCart, 0);
+
+            if (stripeToken == null)
+            {
+                cart.OrderHeader.PaymentDueDate = DateTime.Now.AddDays(30);
+                cart.OrderHeader.PaymentStatus = MusicStore.ApplicationLayer.Payment.PaymentStripeStatus.PaymentStatusDelayedPayment;
+                cart.OrderHeader.OrderStatus = MusicStore.ApplicationLayer.Payment.PaymentStripeStatus.StatusApproved;
+            }
+            else
+            {
+                var options = new ChargeCreateOptions
+                {
+                    Amount = Convert.ToInt32(cart.OrderHeader.OrderTotal*100),
+                    Currency= "usd",
+                    Description="Order Id : " + cart.OrderHeader.Id,
+                    Source= stripeToken
+                };
+                var service = new ChargeService();
+                Charge charge = service.Create(options);
+                if (charge.BalanceTransactionId == null)
+                    cart.OrderHeader.PaymentStatus = MusicStore.ApplicationLayer.Payment.PaymentStripeStatus.PaymentStatusRejected;
+                
+                else
+                    cart.OrderHeader.TransactionId = charge.BalanceTransactionId;
+
+                if (charge.Status.ToLower() == "succeeded")
+                {
+                    cart.OrderHeader.PaymentStatus = MusicStore.ApplicationLayer.Payment.PaymentStripeStatus.PaymentStatusApproved;
+                    cart.OrderHeader.OrderStatus = MusicStore.ApplicationLayer.Payment.PaymentStripeStatus.StatusApproved;
+                    cart.OrderHeader.PaymentDate = DateTime.Now;
+
+                }
+            }
+            _uow.Commit();
+
+            return RedirectToAction("OrderConfirmation", "Cart", new { id = cart.OrderHeader.Id });
+
+
+        }
+
+
+        public IActionResult OrderConfirmation(int id)
+        {
+            return View(id);
         }
 
 
