@@ -4,6 +4,8 @@ using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.WebUtilities;
 using MusicStore.ApplicationLayer;
+using MusicStore.ApplicationLayer.Extensions;
+using MusicStore.ApplicationLayer.Payment;
 using MusicStore.ApplicationLayer.ViewModels;
 using MusicStore.DomainLayer.Entities;
 using MusicStore.DomainLayer.UnitOfWork.Abstraction;
@@ -89,21 +91,49 @@ namespace MusicStore.PresentationLayer.Areas.Customer.Controllers
         }
 
 
-        public IActionResult Plus(int cartId)
+        public IActionResult Plus(int id)
         {
-            var cart = _uow.ShoppingCart.GetFirstOrDefault(x => x.Id == cartId, includeProperties: "Product");
-            if (cart == null)
+            #region Other option
+            //var cart = _uow.ShoppingCart.GetFirstOrDefault(x => x.Id == id, includeProperties: "Product");
+            //if (cart == null)
+            //{
+            //    return Json(false);
+            //    //return RedirectToAction("Index");
+            //}
+            //else
+            //{
+            //    cart.Count += 1;
+            //    cart.Price = MusicStore.ApplicationLayer.Extensions.CartExtension.GetPriceBaseOnQuantity(cart.Count,cart.Product.Price,cart.Product.Price50,cart.Product.Price100);
+            //    _uow.Commit();
+            //    //return RedirectToAction("Index");
+            //    //var allShoppingCart = _uow.ShoppingCart.GetAll();
+
+            //    return Json(false);
+            //    //return Json(allShoppingCart);
+            //}
+            #endregion
+            try
             {
-                return RedirectToAction("Index");
-            }
-            else
-            {
+                var cart = _uow.ShoppingCart.GetFirstOrDefault(x => x.Id == id, includeProperties: "Product");
+
+                if (cart == null)
+                    return Json(false);
+                
+
                 cart.Count += 1;
-                cart.Price = MusicStore.ApplicationLayer.Extensions.CartExtension.GetPriceBaseOnQuantity(cart.Count,cart.Product.Price,cart.Product.Price50,cart.Product.Price100);
+                cart.Price = CartExtension.GetPriceBaseOnQuantity(cart.Count, cart.Product.Price, cart.Product.Price50, cart.Product.Price100);
+
                 _uow.Commit();
-                return RedirectToAction("Index");
+                
+
+                return Json(true);
+              
             }
-            
+            catch (Exception ex)
+            {
+                return Json(false);
+            }
+
         }
 
         public IActionResult Minus(int cartId)
